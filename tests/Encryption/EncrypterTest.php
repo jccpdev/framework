@@ -192,6 +192,52 @@ class EncrypterTest extends TestCase
         $e->decrypt($modified_payload);
     }
 
+    public function testExceptionThrownWhenKeyIdIsNullAndThereAreMultipleKeys()
+    {
+        //Expected
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('KeyStore may only contain one key if no key id is provided');
+
+        //Given
+        $keyStore = new KeyStore();
+        $keyStore->setKeys([
+            new Key(Uuid::uuid4()->toString(), str_repeat('a', 16)),
+            new Key(Uuid::uuid4()->toString(), str_repeat('a', 16)),
+            new Key(Uuid::uuid4()->toString(), str_repeat('a', 16)),
+        ]);
+
+        //When
+        new Encrypter($keyStore);
+
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function testEncryptionAndDecryptionWithAKeyId()
+    {
+        //Given
+        $keyToUse = Uuid::uuid4()->toString();
+        $secondKey = Uuid::uuid4()->toString();
+        $keyStore = new KeyStore();
+        $keyStore->setKeys([
+            new Key(Uuid::uuid4()->toString(), str_repeat('a', 16)),
+            new Key($keyToUse, str_repeat('a', 16)),
+            new Key($secondKey, str_repeat('a', 16)),
+        ]);
+        $expectedValue = 'test';
+        $encryptedValue = (new Encrypter($keyStore, $keyToUse))
+            ->encryptString($expectedValue);
+
+        //When
+        $sut = new Encrypter($keyStore, $secondKey);
+
+        //Then
+        $this->assertNotEmpty($encryptedValue);
+        $this->assertEquals(json_decode(base64_decode($encryptedValue), true)['keyId'], $keyToUse);
+        $this->assertEquals($expectedValue, $sut->decryptString($encryptedValue));
+    }
+
     /**
      * @param $id
      * @param $value

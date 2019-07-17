@@ -16,12 +16,22 @@ class Encrypter implements EncrypterContract
      * Create a new encrypter instance.
      *
      * @param KeyStore $keyStore
+     * @param string|null $keyId
      */
-    public function __construct(KeyStore $keyStore)
+    public function __construct(KeyStore $keyStore, string $keyId = null)
     {
-        if ($keyStore->count() === 1) {
+
+        if ($keyId === null) {
+
+            if ($keyStore->count() > 1) {
+                throw new RuntimeException('KeyStore may only contain one key if no key id is provided');
+            }
+
             $this->key = $keyStore->getAll()->first();
+        } else {
+            $this->key = $keyStore->getByKeyId($keyId);
         }
+
 
         if (!static::supported($this->key->getValue(), $this->key->getCipher())) {
             throw new RuntimeException('The only supported ciphers are AES-128-CBC and AES-256-CBC with the correct key lengths.');
@@ -86,7 +96,9 @@ class Encrypter implements EncrypterContract
         // its authenticity. Then, we'll JSON the data into the "payload" array.
         $mac = $this->hash($iv = base64_encode($iv), $value);
 
-        $json = json_encode(compact('iv', 'value', 'mac'));
+        $payload = new EncryptionPayload($iv, $value, $mac, $this->key->getId());
+
+        $json = json_encode($payload);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new EncryptException('Could not encrypt the data.');
@@ -123,13 +135,13 @@ class Encrypter implements EncrypterContract
     {
         $payload = $this->getJsonPayload($payload);
 
-        $iv = base64_decode($payload['iv']);
+        $iv = base64_decode($payload->getIv());
 
         // Here we will decrypt the value. If we are able to successfully decrypt it
         // we will then unserialize it and return it out to the caller. If we are
         // unable to decrypt this value we will throw out an exception message.
         $decrypted = \openssl_decrypt(
-            $payload['value'], $this->key->getCipher(), $this->key->getValue(), 0, $iv
+            $payload->getValue(), $this->key->getCipher(), $this->key->getValue(), 0, $iv
         );
 
         if ($decrypted === false) {
@@ -174,9 +186,16 @@ class Encrypter implements EncrypterContract
      * @throws DecryptException
      * @throws \Exception
      */
-    protected function getJsonPayload($payload)
+    protected function getJsonPayload($payload): EncryptionPayload
     {
-        $payload = json_decode(base64_decode($payload), true);
+        $rawPayload = json_decode(base64_decode($payload), true);
+
+        $payload = new EncryptionPayload(
+            $rawPayload['iv'],
+            $rawPayload['value'],
+            $rawPayload['mac'],
+            $rawPayload['keyId']
+        );
 
         // If the payload is not valid JSON or does not have the proper keys set we will
         // assume it is invalid and bail out of the routine since we will not be able
@@ -198,39 +217,43 @@ class Encrypter implements EncrypterContract
      * @param mixed $payload
      * @return bool
      */
-    protected function validPayload($payload)
+    protected function validPayload(EncryptionPayload $payload)
     {
-        return is_array($payload) && isset($payload['iv'], $payload['value'], $payload['mac']) &&
-            strlen(base64_decode($payload['iv'], true)) === openssl_cipher_iv_length($this->key->getCipher());
+        return
+            is_object($payload)
+            && !empty($payload->getIv())
+            && !empty($payload->getValue())
+            && !empty($payload->getMac())
+            && strlen(base64_decode($payload->getIv(), true)) === openssl_cipher_iv_length($this->key->getCipher());
     }
 
     /**
      * Determine if the MAC for the given payload is valid.
      *
-     * @param array $payload
+     * @param EncryptionPayload $payload
      * @return bool
      * @throws \Exception
      */
-    protected function validMac(array $payload)
+    protected function validMac(EncryptionPayload $payload)
     {
         $calculated = $this->calculateMac($payload, $bytes = random_bytes(16));
 
         return hash_equals(
-            hash_hmac('sha256', $payload['mac'], $bytes, true), $calculated
+            hash_hmac('sha256', $payload->getMac(), $bytes, true), $calculated
         );
     }
 
     /**
      * Calculate the hash of the given payload.
      *
-     * @param array $payload
+     * @param EncryptionPayload $payload
      * @param string $bytes
      * @return string
      */
-    protected function calculateMac($payload, $bytes)
+    protected function calculateMac(EncryptionPayload $payload, $bytes)
     {
         return hash_hmac(
-            'sha256', $this->hash($payload['iv'], $payload['value']), $bytes, true
+            'sha256', $this->hash($payload->getIv(), $payload->getValue()), $bytes, true
         );
     }
 
