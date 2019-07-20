@@ -238,6 +238,47 @@ class EncrypterTest extends TestCase
         $this->assertEquals($expectedValue, $sut->decryptString($encryptedValue));
     }
 
+    public function testEncryptionCanDecryptAValueEncryptedWithAPreviousKey()
+    {
+        //Given
+        $keyA =  new Key(Uuid::uuid4()->toString(), str_repeat('a', 16));
+        $keyStoreA = (new KeyStore())->setKey($keyA);
+
+        $keyB =  new Key(Uuid::uuid4()->toString(), str_repeat('b', 32), Cipher::AES_256_CBC);
+        $keyStoreAB = (new KeyStore())->setKeys(collect([$keyA, $keyB]));
+
+        //Encryption with key A
+        $encryptionA = new Encrypter($keyStoreA);
+        $expectedValue = 'May the force be with you!';
+        $encryptedValueWithKeyA = $encryptionA->encrypt($expectedValue);
+
+        //Encryption with key A+B
+        $encryptionAB = new Encrypter($keyStoreAB, $keyB->getId());
+
+        //When
+        $decryptedValue = $encryptionAB->decrypt($encryptedValueWithKeyA);
+
+        //Then
+        $this->assertEquals($expectedValue, $decryptedValue);
+
+    }
+
+    public function testAllKeysAreValidated()
+    {
+
+        //Expected
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The only supported ciphers are AES-128-CBC and AES-256-CBC with the correct key lengths.');
+
+        //Given
+        $keyA =  new Key(Uuid::uuid4()->toString(), str_repeat('a', 16), Cipher::AES_256_CBC);
+        $keyB =  new Key(Uuid::uuid4()->toString(), str_repeat('b', 32), Cipher::AES_256_CBC);
+        $keyStoreAB = (new KeyStore())->setKeys(collect([$keyA, $keyB]));
+
+        //When
+        $encrypter = new Encrypter($keyStoreAB, $keyB->getId());;
+    }
+
     /**
      * @param $id
      * @param $value

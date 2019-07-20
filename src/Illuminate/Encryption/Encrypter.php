@@ -12,6 +12,9 @@ class Encrypter implements EncrypterContract
     /** @var Key */
     protected $key;
 
+    /** @var KeyStore */
+    private $keyStore;
+
     /**
      * Create a new encrypter instance.
      *
@@ -20,6 +23,8 @@ class Encrypter implements EncrypterContract
      */
     public function __construct(KeyStore $keyStore, string $keyId = null)
     {
+
+        $this->keyStore = $keyStore;
 
         if ($keyId === null) {
 
@@ -32,10 +37,13 @@ class Encrypter implements EncrypterContract
             $this->key = $keyStore->getByKeyId($keyId);
         }
 
+        $keyStore->getAll()->each(function (Key $key) {
+            if (!static::supported($key->getValue(), $key->getCipher())) {
+                throw new RuntimeException('The only supported ciphers are AES-128-CBC and AES-256-CBC with the correct key lengths.');
+            }
+        });
 
-        if (!static::supported($this->key->getValue(), $this->key->getCipher())) {
-            throw new RuntimeException('The only supported ciphers are AES-128-CBC and AES-256-CBC with the correct key lengths.');
-        }
+
     }
 
     /**
@@ -94,7 +102,7 @@ class Encrypter implements EncrypterContract
         // Once we get the encrypted value we'll go ahead and base64_encode the input
         // vector and create the MAC for the encrypted value so we can then verify
         // its authenticity. Then, we'll JSON the data into the "payload" array.
-        $mac = $this->hash($iv = base64_encode($iv), $value);
+        $mac = $this->hash($iv = base64_encode($iv), $value, $this->key);
 
         $payload = new EncryptionPayload($iv, $value, $mac, $this->key->getId());
 
@@ -135,13 +143,15 @@ class Encrypter implements EncrypterContract
     {
         $payload = $this->getJsonPayload($payload);
 
+        $key = $this->determineKey($payload);
+
         $iv = base64_decode($payload->getIv());
 
         // Here we will decrypt the value. If we are able to successfully decrypt it
         // we will then unserialize it and return it out to the caller. If we are
         // unable to decrypt this value we will throw out an exception message.
         $decrypted = \openssl_decrypt(
-            $payload->getValue(), $this->key->getCipher(), $this->key->getValue(), 0, $iv
+            $payload->getValue(), $key->getCipher(), $key->getValue(), 0, $iv
         );
 
         if ($decrypted === false) {
@@ -170,11 +180,13 @@ class Encrypter implements EncrypterContract
      *
      * @param string $iv
      * @param mixed $value
+     * @param $key
      * @return string
      */
-    protected function hash($iv, $value)
+    protected function hash($iv, $value, Key $key = null)
     {
-        return hash_hmac('sha256', $iv . $value, $this->key->getValue());
+        $key = $key ?? $this->key;
+        return hash_hmac('sha256', $iv . $value, $key->getValue());
     }
 
     /**
@@ -252,8 +264,9 @@ class Encrypter implements EncrypterContract
      */
     protected function calculateMac(EncryptionPayload $payload, $bytes)
     {
+        $key = $this->determineKey($payload);
         return hash_hmac(
-            'sha256', $this->hash($payload->getIv(), $payload->getValue()), $bytes, true
+            'sha256', $this->hash($payload->getIv(), $payload->getValue(), $key), $bytes, true
         );
     }
 
@@ -265,5 +278,10 @@ class Encrypter implements EncrypterContract
     public function getKey()
     {
         return $this->key;
+    }
+
+    private function determineKey(EncryptionPayload $payload): ?Key
+    {
+        return $this->keyStore->getByKeyId($payload->getKeyId());
     }
 }
