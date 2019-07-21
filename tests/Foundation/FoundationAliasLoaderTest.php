@@ -61,6 +61,12 @@ class FoundationAliasLoaderTest extends TestCase
         $this->assertInstanceOf(FoundationAliasLoaderStub::class, $fooObj);
         $this->assertTrue($result);
     }
+
+    public function tearDown(): void
+    {
+        parent::tearDown();
+        AliasLoader::setInstance(null);
+    }
 }
 
 class FoundationAliasLoaderStub
