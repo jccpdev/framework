@@ -30,11 +30,6 @@ class EncryptionTest extends TestCase
         $this->app->make('encrypter');
     }
 
-    public function test_encryption_will_work_with_key_rotation()
-    {
-
-    }
-
 
     private function setUpEncryptionWithAppKey()
     {

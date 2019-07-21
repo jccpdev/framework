@@ -2,6 +2,8 @@
 
 namespace Illuminate\Tests\Cookie\Middleware;
 
+use Illuminate\Encryption\Key;
+use Illuminate\Encryption\KeyStore;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Router;
@@ -11,6 +13,7 @@ use Illuminate\Events\Dispatcher;
 use Illuminate\Routing\Controller;
 use Illuminate\Container\Container;
 use Illuminate\Encryption\Encrypter;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Cookie;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -32,8 +35,11 @@ class EncryptCookiesTest extends TestCase
 
         $container = new Container;
         $container->singleton(EncrypterContract::class, function () {
-            return new Encrypter(str_repeat('a', 16));
+            $keyA =  new Key(Uuid::uuid4()->toString(), str_repeat('a', 16));
+            $keyStore = (new KeyStore())->setKey($keyA);
+            return new Encrypter($keyStore);
         });
+
 
         $this->router = new Router(new Dispatcher, $container);
     }

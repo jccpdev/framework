@@ -10,7 +10,7 @@ use Illuminate\Contracts\Encryption\Encrypter as EncrypterContract;
 class Encrypter implements EncrypterContract
 {
     /** @var Key */
-    protected $key;
+    private $key;
 
     /** @var KeyStore */
     private $keyStore;
@@ -57,8 +57,8 @@ class Encrypter implements EncrypterContract
     {
         $length = mb_strlen($key, '8bit');
 
-        return ($cipher === 'AES-128-CBC' && $length === 16) ||
-            ($cipher === 'AES-256-CBC' && $length === 32);
+        return ($cipher === Cipher::AES_128_CBC && $length === 16) ||
+            ($cipher === Cipher::AES_256_CBC && $length === 32);
     }
 
     /**
@@ -70,7 +70,7 @@ class Encrypter implements EncrypterContract
      */
     public static function generateKey($cipher)
     {
-        return random_bytes($cipher === 'AES-128-CBC' ? 16 : 32);
+        return random_bytes($cipher === Cipher::AES_128_CBC ? 16 : 32);
     }
 
     /**
@@ -268,16 +268,6 @@ class Encrypter implements EncrypterContract
         return hash_hmac(
             'sha256', $this->hash($payload->getIv(), $payload->getValue(), $key), $bytes, true
         );
-    }
-
-    /**
-     * Get the encryption key.
-     *
-     * @return string
-     */
-    public function getKey()
-    {
-        return $this->key;
     }
 
     private function determineKey(EncryptionPayload $payload): ?Key
