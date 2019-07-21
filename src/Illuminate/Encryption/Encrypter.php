@@ -265,6 +265,7 @@ class Encrypter implements EncrypterContract
     protected function calculateMac(EncryptionPayload $payload, $bytes)
     {
         $key = $this->determineKey($payload);
+
         return hash_hmac(
             'sha256', $this->hash($payload->getIv(), $payload->getValue(), $key), $bytes, true
         );
