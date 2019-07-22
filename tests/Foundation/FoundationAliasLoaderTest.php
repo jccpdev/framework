@@ -9,6 +9,8 @@ class FoundationAliasLoaderTest extends TestCase
 {
     public function testLoaderCanBeCreatedAndRegisteredOnce()
     {
+        AliasLoader::setInstance(null);
+
         $loader = AliasLoader::getInstance(['foo' => 'bar']);
 
         $this->assertEquals(['foo' => 'bar'], $loader->getAliases());
@@ -20,12 +22,16 @@ class FoundationAliasLoaderTest extends TestCase
 
     public function testGetInstanceCreatesOneInstance()
     {
+        AliasLoader::setInstance(null);
+
         $loader = AliasLoader::getInstance(['foo' => 'bar']);
         $this->assertSame($loader, AliasLoader::getInstance());
     }
 
     public function testLoaderCanBeCreatedAndRegisteredMergingAliases()
     {
+        AliasLoader::setInstance(null);
+
         $loader = AliasLoader::getInstance(['foo' => 'bar']);
         $this->assertEquals(['foo' => 'bar'], $loader->getAliases());
 
@@ -39,6 +45,8 @@ class FoundationAliasLoaderTest extends TestCase
 
     public function testLoaderCanAliasAndLoadClasses()
     {
+        AliasLoader::setInstance(null);
+
         $loader = AliasLoader::getInstance(['some_alias_foo_bar' => FoundationAliasLoaderStub::class]);
 
         $result = $loader->load('some_alias_foo_bar');
@@ -52,6 +60,8 @@ class FoundationAliasLoaderTest extends TestCase
 
     public function testSetAlias()
     {
+        AliasLoader::setInstance(null);
+
         $loader = AliasLoader::getInstance();
         $loader->setAliases(['some_alias_foo' => FoundationAliasLoaderStub::class]);
 
@@ -62,11 +72,6 @@ class FoundationAliasLoaderTest extends TestCase
         $this->assertTrue($result);
     }
 
-    public function tearDown(): void
-    {
-        parent::tearDown();
-        AliasLoader::setInstance(null);
-    }
 }
 
 class FoundationAliasLoaderStub
