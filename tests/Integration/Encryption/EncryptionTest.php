@@ -4,6 +4,7 @@ namespace Illuminate\Tests\Integration\Encryption;
 
 use Illuminate\Contracts\Encryption\Encrypter as EncrypterContract;
 use Illuminate\Encryption\Cipher;
+use Illuminate\Encryption\KeyStoreFactory\KeyRotationKeyStoreFactory;
 use RuntimeException;
 use Orchestra\Testbench\TestCase;
 use Illuminate\Encryption\Encrypter;
@@ -11,7 +12,6 @@ use Illuminate\Encryption\EncryptionServiceProvider;
 
 class EncryptionTest extends TestCase
 {
-
     public function test_encryption_provider_bind()
     {
         $this->setUpEncryptionWithAppKey();
@@ -30,6 +30,22 @@ class EncryptionTest extends TestCase
         $this->app->make('encrypter');
     }
 
+    public function test_encryption_will_work_with_the_KeyRotationKeyStoreFactory()
+    {
+        //Given
+        $keyIdUsedToEncrypt = $this->setUpRotationKeyEncryption();
+
+        //When
+        $this->app->register(EncryptionServiceProvider::class);
+        /** @var EncrypterContract $encrypter */
+        $encrypter = $this->app->make(EncrypterContract::class);
+        $encryptedValue = $encrypter->encrypt('test');
+        $encryptedPayload = json_decode(base64_decode($encryptedValue));
+
+        //Then
+        $this->assertEquals($keyIdUsedToEncrypt, $encryptedPayload->keyId);
+
+    }
 
     private function setUpEncryptionWithAppKey()
     {
@@ -37,30 +53,29 @@ class EncryptionTest extends TestCase
         $this->app->register(EncryptionServiceProvider::class);
     }
 
-    private function encryptWith($keyId, $valueToEncrypt)
+    private function setUpRotationKeyEncryption()
     {
+
         $keysFromConfig = [
             'key-1' => [
-                'value'  => 'base64:IUHRqAQ99pZ0A1MPjbuv1D6ff3jxv0GIvS2qIW4JNU4=',
+                'value'  => sprintf('base64:%s',base64_encode(Encrypter::generateKey(Cipher::AES_128_CBC))),
                 'cipher' => Cipher::AES_128_CBC,
             ],
             'key-2' => [
-                'value'  => 'base64:IUHRqAQ99pZ0A1MPjbuv1D6ff3jxv0GIvS2qIW4JNU4=',
-                'cipher' => Cipher::AES_128_CBC,
+                'value'  => sprintf('base64:%s',base64_encode(Encrypter::generateKey(Cipher::AES_256_CBC))),
+                'cipher' => Cipher::AES_256_CBC,
             ],
             'key-3' => [
-                'value'  => 'base64:IUHRqAQ99pZ0A1MPjbuv1D6ff3jxv0GIvS2qIW4JNU4=',
+                'value'  => sprintf('base64:%s',base64_encode(Encrypter::generateKey(Cipher::AES_128_CBC))),
                 'cipher' => Cipher::AES_128_CBC,
             ],
         ];
 
         $this->app['config']->set('app.encryption.keyProvider', KeyRotationKeyStoreFactory::class);
         $this->app['config']->set('app.encryption.keys', $keysFromConfig);
+        $this->app['config']->set('app.encryption.currentKey', 'key-2');
 
-        $expectedKeyStore = (new KeyStore())->setKeys(collect([
-            'key-1' => $this->makeKeyStub('key-1', $keysFromConfig['key-1']['value'], $keysFromConfig['key-1']['cipher']),
-            'key-2' => $this->makeKeyStub('key-2', $keysFromConfig['key-2']['value'], $keysFromConfig['key-2']['cipher']),
-            'key-3' => $this->makeKeyStub('key-3', $keysFromConfig['key-3']['value'], $keysFromConfig['key-3']['cipher']),
-        ]));
+        return 'key-2';
+
     }
 }

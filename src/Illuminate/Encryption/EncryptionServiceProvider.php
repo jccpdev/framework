@@ -18,11 +18,13 @@ class EncryptionServiceProvider extends ServiceProvider
         $this->app->singleton('encrypter', function ($app) {
             $config = $app->make('config');
 
+            $currentKey = $config->get('app.encryption.currentKey');
+
             $keyStoreFactory = new KeyStoreFactory();
 
             $keyStore = $keyStoreFactory->make($config);
 
-            return new Encrypter($keyStore);
+            return new Encrypter($keyStore, $currentKey);
         });
     }
 
