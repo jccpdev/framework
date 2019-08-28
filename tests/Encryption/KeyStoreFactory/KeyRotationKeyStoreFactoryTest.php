@@ -34,7 +34,7 @@ class KeyRotationKeyStoreFactoryTest extends TestCase
                 'cipher' => Cipher::AES_128_CBC,
             ],
             'key-2' => [
-                'value'  => 'base64:IUHRqAQ99pZ0A1MPjbuv1D6ff3jxv0GIvS2qIW4JNU4=',
+                'value'  => 'b"!AÐ¿\x04=÷ût\x03S\x0Fì╗»È>ƒ\x7Fx±┐Aê¢-¬!n\t5N"',
                 'cipher' => Cipher::AES_128_CBC,
             ],
             'key-3' => [

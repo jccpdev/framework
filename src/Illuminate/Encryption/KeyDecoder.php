@@ -6,6 +6,10 @@ namespace Illuminate\Encryption;
 
 trait KeyDecoder
 {
+    /**
+     * @param $encodedKey
+     * @return string|null
+     */
     public function decode($encodedKey)
     {
         $possibleDecoders = [
@@ -17,7 +21,7 @@ trait KeyDecoder
         $splitValue = explode(":", $encodedKey);
 
         if (count($splitValue) < 2) {
-            return null;
+            return $encodedKey;
         }
 
         $decoder = $possibleDecoders[$splitValue[0]];

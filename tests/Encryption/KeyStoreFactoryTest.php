@@ -44,6 +44,24 @@ class KeyStoreFactoryTest extends TestCase
         $this->assertEquals($expectedKeyStore, $actualKeyStore);
     }
 
+    public function testFactoryWillMakeKeyStoreWithAppKeyByDefaultAndUnEncodedKey()
+    {
+        //Given
+        $unencodedKey = 'b"!AÐ¿\x04=÷ût\x03S\x0Fì╗»È>ƒ\x7Fx±┐Aê¢-¬!n\t5N"';
+        $cipher = Cipher::AES_128_CBC;
+        $this->app['config']->set('app.key', $unencodedKey);
+        $this->app['config']->set('app.cipher', $cipher);
+
+        $expectedKeyStore = (new KeyStore())
+            ->setKey(new Key('app-key', $unencodedKey, $cipher));
+
+        //When
+        $actualKeyStore = $this->sut->make($this->app['config']);
+
+        //Then
+        $this->assertEquals($expectedKeyStore, $actualKeyStore);
+    }
+
     public function testFactoryWillMakeKeyRotationKeyStoreIfSpecifiedInConfig()
     {
         //Given

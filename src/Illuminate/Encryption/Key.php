@@ -7,10 +7,13 @@ namespace Illuminate\Encryption;
 class Key
 {
 
+    /** @var string */
     private $id;
 
+    /** @var string */
     private $value;
 
+    /** @var string  */
     private $cipher;
 
     public function __construct($id, $value, $cipher = Cipher::AES_128_CBC)
@@ -21,7 +24,7 @@ class Key
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getId()
     {
@@ -29,7 +32,7 @@ class Key
     }
 
     /**
-     * @param mixed $id
+     * @param string $id
      * @return Key
      */
     public function setId($id)
@@ -39,7 +42,7 @@ class Key
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getValue()
     {
@@ -47,7 +50,7 @@ class Key
     }
 
     /**
-     * @param mixed $value
+     * @param string $value
      * @return Key
      */
     public function setValue($value)
@@ -57,7 +60,7 @@ class Key
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getCipher()
     {
@@ -65,7 +68,7 @@ class Key
     }
 
     /**
-     * @param mixed $cipher
+     * @param string $cipher
      * @return Key
      */
     public function setCipher($cipher)

@@ -211,6 +211,19 @@ class EncrypterTest extends TestCase
 
     }
 
+    public function testExceptionIsThrownWhenKeyStoreHasNoKey()
+    {
+        //Expected
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Keystore must contain at least one key.');
+
+        //Given
+        $keyStore = new KeyStore();
+
+        //When
+        new Encrypter($keyStore);
+    }
+
     /**
      * @throws \Exception
      */

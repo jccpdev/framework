@@ -7,12 +7,16 @@ namespace Illuminate\Encryption;
 class EncryptionPayload implements \JsonSerializable
 {
 
+    /** @var string */
     private $iv;
 
+    /** @var string */
     private $value;
 
+    /** @var string */
     private $mac;
 
+    /** @var string */
     private $keyId;
 
     public function __construct($iv, $value, $mac, $keyId)

@@ -33,7 +33,7 @@ class AppKeyKeyStoreFactory implements KeyStoreFactory
         $decodedKey = $this->decode($appKey);
 
         return (new KeyStore())
-            ->setKey(new Key('app-key', $decodedKey ?? $appKey, $cipher));
+            ->setKey(new Key('app-key', $decodedKey, $cipher));
 
     }
 }

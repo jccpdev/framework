@@ -2,18 +2,19 @@
 
 namespace Illuminate\Tests\Cookie\Middleware;
 
-use Illuminate\Encryption\Key;
-use Illuminate\Encryption\KeyStore;
+
+use Ramsey\Uuid\Uuid;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Router;
+use Illuminate\Encryption\Key;
 use PHPUnit\Framework\TestCase;
 use Illuminate\Cookie\CookieJar;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Routing\Controller;
 use Illuminate\Container\Container;
+use Illuminate\Encryption\KeyStore;
 use Illuminate\Encryption\Encrypter;
-use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Cookie;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -35,7 +36,7 @@ class EncryptCookiesTest extends TestCase
 
         $container = new Container;
         $container->singleton(EncrypterContract::class, function () {
-            $keyA =  new Key(Uuid::uuid4()->toString(), str_repeat('a', 16));
+            $keyA = new Key(Uuid::uuid4()->toString(), str_repeat('a', 16));
             $keyStore = (new KeyStore())->setKey($keyA);
             return new Encrypter($keyStore);
         });
@@ -48,7 +49,7 @@ class EncryptCookiesTest extends TestCase
     {
         $this->router->get($this->setCookiePath, [
             'middleware' => EncryptCookiesTestMiddleware::class,
-            'uses' => EncryptCookiesTestController::class.'@setCookies',
+            'uses'       => EncryptCookiesTestController::class . '@setCookies',
         ]);
 
         $response = $this->router->dispatch(Request::create($this->setCookiePath, 'GET'));
@@ -65,7 +66,7 @@ class EncryptCookiesTest extends TestCase
     {
         $this->router->get($this->queueCookiePath, [
             'middleware' => [EncryptCookiesTestMiddleware::class, AddQueuedCookiesToResponseTestMiddleware::class],
-            'uses' => EncryptCookiesTestController::class.'@queueCookies',
+            'uses'       => EncryptCookiesTestController::class . '@queueCookies',
         ]);
 
         $response = $this->router->dispatch(Request::create($this->queueCookiePath, 'GET'));

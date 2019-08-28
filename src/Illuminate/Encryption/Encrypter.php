@@ -26,6 +26,10 @@ class Encrypter implements EncrypterContract
 
         $this->keyStore = $keyStore;
 
+        if ($keyStore->isEmpty()) {
+            throw new RuntimeException('Keystore must contain at least one key.');
+        }
+
         if ($keyId === null) {
 
             if ($keyStore->count() > 1) {

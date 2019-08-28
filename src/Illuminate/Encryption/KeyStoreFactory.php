@@ -14,10 +14,12 @@ class KeyStoreFactory implements KeyStoreFactoryContract
 
     public function make(Repository $config): KeyStore
     {
-        if ($config->get(self::PATH_TO_KEY_PROVIDER)) {
+        $pathToKeyProvider = $config->get(self::PATH_TO_KEY_PROVIDER);
+        if ($pathToKeyProvider) {
             return $this->makeKeyStoreFromKeyProvider($config->get(self::PATH_TO_KEY_PROVIDER))
                 ->make($config);
         }
+
         return $this->makeAppKeyKeyStoreFactory()->make($config);
     }
 

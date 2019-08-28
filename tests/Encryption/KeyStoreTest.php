@@ -131,4 +131,11 @@ class KeyStoreTest extends TestCase
         $this->assertEquals($expectedCount, $actualCount);
     }
 
+    public function testIsEmptyReturnsTrueIfKeyStoreHasNoKeys()
+    {
+        //Given empty key store
+
+        //When Then
+         $this->assertTrue($this->sut->isEmpty());
+    }
 }

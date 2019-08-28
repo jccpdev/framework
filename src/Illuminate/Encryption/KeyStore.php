@@ -71,4 +71,9 @@ class KeyStore
         return $this->keys->count();
     }
 
+    public function isEmpty(): bool
+    {
+        return $this->keys->isEmpty();
+    }
+
 }
