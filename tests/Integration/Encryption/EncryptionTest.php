@@ -44,6 +44,7 @@ class EncryptionTest extends TestCase
 
         //Then
         $this->assertEquals($keyIdUsedToEncrypt, $encryptedPayload->keyId);
+        $this->assertEquals('test', $encrypter->decrypt($encryptedValue));
 
     }
 
@@ -58,15 +59,15 @@ class EncryptionTest extends TestCase
 
         $keysFromConfig = [
             'key-1' => [
-                'value'  => sprintf('base64:%s',base64_encode(Encrypter::generateKey(Cipher::AES_128_CBC))),
+                'value'  => sprintf('base64:%s', base64_encode(Encrypter::generateKey(Cipher::AES_128_CBC))),
                 'cipher' => Cipher::AES_128_CBC,
             ],
             'key-2' => [
-                'value'  => sprintf('base64:%s',base64_encode(Encrypter::generateKey(Cipher::AES_256_CBC))),
+                'value'  => sprintf('base64:%s', base64_encode(Encrypter::generateKey(Cipher::AES_256_CBC))),
                 'cipher' => Cipher::AES_256_CBC,
             ],
             'key-3' => [
-                'value'  => sprintf('base64:%s',base64_encode(Encrypter::generateKey(Cipher::AES_128_CBC))),
+                'value'  => sprintf('base64:%s', base64_encode(Encrypter::generateKey(Cipher::AES_128_CBC))),
                 'cipher' => Cipher::AES_128_CBC,
             ],
         ];
